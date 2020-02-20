@@ -12,15 +12,17 @@ namespace Pixel_Photo_Comparer
         public MainWindow()
         {
             InitializeComponent();
-            GetPhotos();
-        }       
+            MoveDuplicatePhotos();
+            ProcessDuplicatePhotos();
+        }
+        
+        readonly static string folderPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), @"OneDrive\Pictures\Camera Roll");
+        readonly static string duplicateFolderPath = Path.Combine(folderPath, @"Duplicates");
+        const string burst = "BURST";
 
-        void GetPhotos()
-        {
-            var folderPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), @"OneDrive\Pictures\Camera Roll");
-            var newFolderPath = Path.Combine(folderPath, @"Duplicates");
+        void MoveDuplicatePhotos()
+        {            
             var files = Directory.EnumerateFiles(folderPath, "*.jpg");
-            const string burst = "BURST";
 
             var groupedPictures = files
                 .Where(f => f.Contains($"_{burst}"))
@@ -33,9 +35,9 @@ namespace Pixel_Photo_Comparer
             groupedPictures = groupedPictures.Where(g => g.Value.Count > 1).ToList();
             Debug.WriteLine($"Found {groupedPictures.Count} grouped files with duplicates");
 
-            if (groupedPictures.Count > 0 && !Directory.Exists(newFolderPath))
+            if (groupedPictures.Count > 0 && !Directory.Exists(duplicateFolderPath))
             {
-                Directory.CreateDirectory(newFolderPath);
+                Directory.CreateDirectory(duplicateFolderPath);
             }
             foreach (var groupedFile in groupedPictures)
             {
@@ -44,13 +46,28 @@ namespace Pixel_Photo_Comparer
                 {
                     var fileName = Path.GetFileName(file);
                     var oldFilePath = Path.Combine(folderPath, fileName);
-                    var newFilePath = Path.Combine(newFolderPath, fileName);
+                    var newFilePath = Path.Combine(duplicateFolderPath, fileName);
                     File.Move(oldFilePath, newFilePath);
                     Debug.WriteLine($"Moved {oldFilePath} > {newFilePath}");
                 }
             }
 
             Debug.WriteLine($"All files moved");
+        }
+
+        void ProcessDuplicatePhotos()
+        {
+            var duplicateFiles = Directory.EnumerateFiles(duplicateFolderPath, "*.jpg");
+            var groupedPictures = duplicateFiles
+                .Where(f => f.Contains($"_{burst}"))
+                .GroupBy(f => Path.GetFileNameWithoutExtension(f).Split("_")?.FirstOrDefault(s => s.StartsWith(burst))?.Substring(burst.Length))
+                .Select(g => new KeyValuePair<string, HashSet<string>>(g.Key, g.ToHashSet()))
+                .ToList();
+
+            Debug.WriteLine($"Found {groupedPictures.Count} grouped files");
+
+            // now we can show a list of these groups (which should all have 2 pictures)
+            // and then show the two thumbnails side-by-side
         }
     }
 }
