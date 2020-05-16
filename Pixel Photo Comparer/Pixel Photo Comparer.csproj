@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>Pixel_Photo_Comparer</RootNamespace>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Google_Camera_Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
