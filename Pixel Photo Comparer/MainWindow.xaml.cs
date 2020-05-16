@@ -76,7 +76,7 @@ namespace Pixel_Photo_Comparer
 
             Debug.WriteLine($"Found {groupedPictures.Count} grouped files");
 
-            // TODO check if any groupedPictures has more than 2 picturea
+            // TODO check if any groupedPictures has more than 2 pictures           
 
             DuplicatesListView.ItemsSource = groupedPictures;
             DuplicatesListView.SelectedItem = groupedPictures[0];
