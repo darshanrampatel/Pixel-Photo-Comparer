@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Directory = System.IO.Directory;
@@ -22,8 +23,32 @@ namespace Pixel_Photo_Comparer
             InitializeComponent();
             MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
             MaxWidth = SystemParameters.MaximizedPrimaryScreenWidth;
+            RoutedCommand lhCommand = new RoutedCommand();
+            RoutedCommand rhCommand = new RoutedCommand();
+            KeyBinding lhBinding = new KeyBinding()
+            {
+                Command = lhCommand,
+                Key = Key.A
+            };
+            KeyBinding rhBinding = new KeyBinding()
+            {
+                Command = rhCommand,
+                Key = Key.L
+            };
+            InputBindings.Add(lhBinding);
+            InputBindings.Add(rhBinding);
+            CommandBindings.Add(new CommandBinding(lhCommand, SelectLHPhoto));
+            CommandBindings.Add(new CommandBinding(rhCommand, SelectRHPhoto));
             MoveDuplicatePhotos();
             ProcessDuplicatePhotos();
+        }
+
+        void SelectLHPhoto(object sender, ExecutedRoutedEventArgs e) => SelectPhoto(true);
+        void SelectRHPhoto(object sender, ExecutedRoutedEventArgs e) => SelectPhoto(false);
+
+        void SelectPhoto(bool lh)
+        {
+            Debug.WriteLine(nameof(SelectPhoto), lh ? "LEFT" : "RIGHT");
         }
 
         readonly static string folderPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), @"OneDrive\Pictures\Camera Roll");
@@ -97,8 +122,8 @@ namespace Pixel_Photo_Comparer
             {
                 var selectedDuplicate = e.AddedItems[0] as GroupedPhotos;
                 DisposeFileStreams();
-                var ( lhBitmap, lhRotation) = LoadAndRotateImage(lhFileStream, selectedDuplicate.Duplicates.First());
-                var(rhBitmap, rhRotation) = LoadAndRotateImage(rhFileStream, selectedDuplicate.Duplicates.Last());
+                var (lhBitmap, lhRotation) = LoadAndRotateImage(lhFileStream, selectedDuplicate.Duplicates.First());
+                var (rhBitmap, rhRotation) = LoadAndRotateImage(rhFileStream, selectedDuplicate.Duplicates.Last());
                 Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, new System.Threading.ThreadStart(delegate
                 {
                     //Update UI here
@@ -141,7 +166,7 @@ namespace Pixel_Photo_Comparer
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.None;
             bitmap.StreamSource = stream;
-            bitmap.EndInit();            
+            bitmap.EndInit();
             return (bitmap, new RotateTransform(rotation));
         }
 
