@@ -66,8 +66,8 @@ namespace Pixel_Photo_Comparer
                 var photoToRejectNewFilePath = Path.Combine(duplicateRejectedFolderPath, Path.GetFileName(photoToKeep));
                 Debug.WriteLine($"Kept photo, moving {photoToKeep} => {photoToKeepNewFilePath}");
                 Debug.WriteLine($"Rejected photo, moving {photoToReject} => {photoToRejectNewFilePath}");
-                //File.Move(photoToKeep, photoToKeepNewFilePath);
-                //File.Move(photoToReject, photoToRejectNewFilePath);
+                File.Move(photoToKeep, photoToKeepNewFilePath);
+                File.Move(photoToReject, photoToRejectNewFilePath);
                 selectedGroup.Processed = true;
                 DuplicatesListView.ItemsSource = DuplicatesListView.ItemsSource.Cast<GroupedPhotos>().Where(g => g != selectedGroup);
                 DuplicatesListView.SelectedIndex++;
