@@ -36,10 +36,16 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <TextBlock
+                Grid.Row="0"
+                HorizontalAlignment="Center"
+                Text="A" />
             <Image
                 x:Name="LHImage"
+                Grid.Row="1"
                 Margin="12"
                 RenderTransformOrigin="0.5,0.5" />
         </Grid>
@@ -48,10 +54,16 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <TextBlock
+                Grid.Row="0"
+                HorizontalAlignment="Center"
+                Text="L" />
             <Image
                 x:Name="RHImage"
+                Grid.Row="1"
                 Margin="12"
                 RenderTransformOrigin="0.5,0.5" />
         </Grid>
