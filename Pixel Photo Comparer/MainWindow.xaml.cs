@@ -66,6 +66,7 @@ namespace Pixel_Photo_Comparer
                 var photoToRejectNewFilePath = Path.Combine(duplicateRejectedFolderPath, Path.GetFileName(photoToKeep));
                 Debug.WriteLine($"Kept photo, moving {photoToKeep} => {photoToKeepNewFilePath}");
                 Debug.WriteLine($"Rejected photo, moving {photoToReject} => {photoToRejectNewFilePath}");
+                DisposeFileStreams();
                 File.Move(photoToKeep, photoToKeepNewFilePath);
                 File.Move(photoToReject, photoToRejectNewFilePath);
                 selectedGroup.Processed = true;
@@ -150,8 +151,8 @@ namespace Pixel_Photo_Comparer
             {
                 var selectedDuplicate = e.AddedItems[0] as GroupedPhotos;
                 DisposeFileStreams();
-                var (lhBitmap, lhRotation) = LoadAndRotateImage(lhFileStream, selectedDuplicate.Duplicates[0]);
-                var (rhBitmap, rhRotation) = LoadAndRotateImage(rhFileStream, selectedDuplicate.Duplicates[1]);
+                var (lhBitmap, lhRotation) = LoadAndRotateImage(true, selectedDuplicate.Duplicates[0]);
+                var (rhBitmap, rhRotation) = LoadAndRotateImage(false, selectedDuplicate.Duplicates[1]);
                 Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, new System.Threading.ThreadStart(delegate
                 {
                     //Update UI here
@@ -184,17 +185,31 @@ namespace Pixel_Photo_Comparer
         }
 
 #pragma warning disable IDE0060 // Remove unused parameter
-        private (BitmapImage, RotateTransform) LoadAndRotateImage(FileStream stream, string filePath)
+        private (BitmapImage, RotateTransform) LoadAndRotateImage(bool lh, string filePath)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
             var bitmap = new BitmapImage();
-            stream = File.OpenRead(filePath);
-            var rotation = GetRotation(stream);
-            stream.Position = 0;
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.None;
-            bitmap.StreamSource = stream;
-            bitmap.EndInit();
+            double rotation;
+            if (lh)
+            {
+                lhFileStream = File.OpenRead(filePath);
+                rotation = GetRotation(lhFileStream);
+                lhFileStream.Position = 0;
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.None;
+                bitmap.StreamSource = lhFileStream;
+                bitmap.EndInit();
+            } else
+            {
+                rhFileStream = File.OpenRead(filePath);
+                rotation = GetRotation(rhFileStream);
+                rhFileStream.Position = 0;
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.None;
+                bitmap.StreamSource = rhFileStream;
+                bitmap.EndInit();
+            }
+           
             return (bitmap, new RotateTransform(rotation));
         }
 
