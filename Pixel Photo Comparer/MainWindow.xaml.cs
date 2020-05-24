@@ -63,7 +63,7 @@ namespace Pixel_Photo_Comparer
                     photoToReject = selectedGroup.Duplicates[0];
                 }
                 var photoToKeepNewFilePath = Path.Combine(folderPath, Path.GetFileName(photoToKeep));
-                var photoToRejectNewFilePath = Path.Combine(duplicateRejectedFolderPath, Path.GetFileName(photoToKeep));
+                var photoToRejectNewFilePath = Path.Combine(duplicateRejectedFolderPath, Path.GetFileName(photoToReject));
                 Debug.WriteLine($"Kept photo, moving {photoToKeep} => {photoToKeepNewFilePath}");
                 Debug.WriteLine($"Rejected photo, moving {photoToReject} => {photoToRejectNewFilePath}");
                 DisposeFileStreams();
