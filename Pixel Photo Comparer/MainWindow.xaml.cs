@@ -48,11 +48,35 @@ namespace Pixel_Photo_Comparer
 
         void SelectPhoto(bool lh)
         {
-            Debug.WriteLine(nameof(SelectPhoto), lh ? "LEFT" : "RIGHT");
+            if (DuplicatesListView.SelectedItem is GroupedPhotos selectedGroup && !selectedGroup.Processed)
+            {
+                string photoToKeep;
+                string photoToReject;
+                if (lh)
+                {
+                    photoToKeep = selectedGroup.Duplicates[0];
+                    photoToReject = selectedGroup.Duplicates[1];
+                }
+                else
+                {
+                    photoToKeep = selectedGroup.Duplicates[1];
+                    photoToReject = selectedGroup.Duplicates[0];
+                }
+                var photoToKeepNewFilePath = Path.Combine(folderPath, Path.GetFileName(photoToKeep));
+                var photoToRejectNewFilePath = Path.Combine(duplicateRejectedFolderPath, Path.GetFileName(photoToKeep));
+                Debug.WriteLine($"Kept photo, moving {photoToKeep} => {photoToKeepNewFilePath}");
+                Debug.WriteLine($"Rejected photo, moving {photoToReject} => {photoToRejectNewFilePath}");
+                //File.Move(photoToKeep, photoToKeepNewFilePath);
+                //File.Move(photoToReject, photoToRejectNewFilePath);
+                selectedGroup.Processed = true;
+                DuplicatesListView.ItemsSource = DuplicatesListView.ItemsSource.Cast<GroupedPhotos>().Where(g => g != selectedGroup);
+                DuplicatesListView.SelectedIndex++;
+            }
         }
 
         readonly static string folderPath = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), @"OneDrive\Pictures\Camera Roll");
         readonly static string duplicateFolderPath = Path.Combine(folderPath, @"Duplicates");
+        readonly static string duplicateRejectedFolderPath = Path.Combine(duplicateFolderPath, @"Rejected");
         const string burst = "BURST";
 
         void MoveDuplicatePhotos()
@@ -73,6 +97,10 @@ namespace Pixel_Photo_Comparer
             if (groupedPictures.Count > 0 && !Directory.Exists(duplicateFolderPath))
             {
                 Directory.CreateDirectory(duplicateFolderPath);
+            }
+            if (!Directory.Exists(duplicateRejectedFolderPath))
+            {
+                Directory.CreateDirectory(duplicateRejectedFolderPath);
             }
             foreach (var groupedFile in groupedPictures)
             {
@@ -96,12 +124,11 @@ namespace Pixel_Photo_Comparer
             var groupedPictures = duplicateFiles
                 .Where(f => f.Contains($"_{burst}"))
                 .GroupBy(f => Path.GetFileNameWithoutExtension(f).Split("_")?.FirstOrDefault(s => s.StartsWith(burst))?.Substring(burst.Length))
-                .Select((g, idx) => new GroupedPhotos { Index = idx + 1, Key = g.Key, Duplicates = g.ToHashSet() })
+                .Where(g => g.Count() == 2)
+                .Select((g, idx) => new GroupedPhotos { Index = idx + 1, Key = g.Key, Duplicates = g.ToArray() })
                 .ToList();
 
             Debug.WriteLine($"Found {groupedPictures.Count} grouped files");
-
-            // TODO check if any groupedPictures has more than 2 pictures           
 
             DuplicatesListView.ItemsSource = groupedPictures;
             DuplicatesListView.SelectedItem = groupedPictures[0];
@@ -113,7 +140,8 @@ namespace Pixel_Photo_Comparer
             public int Index { get; set; }
             public string Key { get; set; }
             public string KeyDisplay => DateTime.ParseExact(Key, "yyyyMMddHHmmssfff", CultureInfo.InvariantCulture).ToString("yyyy-MM-ddTHH:mm:ss.fff"); // seems like the filenames refer to local time
-            public HashSet<string> Duplicates { get; set; }
+            public string[] Duplicates { get; set; } = new string[2];
+            public bool Processed { get; set; }
         }
 
         private void DuplicatesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -122,15 +150,15 @@ namespace Pixel_Photo_Comparer
             {
                 var selectedDuplicate = e.AddedItems[0] as GroupedPhotos;
                 DisposeFileStreams();
-                var (lhBitmap, lhRotation) = LoadAndRotateImage(lhFileStream, selectedDuplicate.Duplicates.First());
-                var (rhBitmap, rhRotation) = LoadAndRotateImage(rhFileStream, selectedDuplicate.Duplicates.Last());
+                var (lhBitmap, lhRotation) = LoadAndRotateImage(lhFileStream, selectedDuplicate.Duplicates[0]);
+                var (rhBitmap, rhRotation) = LoadAndRotateImage(rhFileStream, selectedDuplicate.Duplicates[1]);
                 Application.Current.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Background, new System.Threading.ThreadStart(delegate
                 {
                     //Update UI here
                     LHImage.LayoutTransform = lhRotation;
                     LHImage.Source = lhBitmap;
                     RHImage.LayoutTransform = rhRotation;
-                    RHImage.Source = rhBitmap;
+                    RHImage.Source = rhBitmap;                    
                 }));
             }
         }
