@@ -8,6 +8,11 @@
     <ApplicationIcon>Google_Camera_Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MetadataExtractor" Version="2.4.2" />
   </ItemGroup>
